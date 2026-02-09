@@ -25,10 +25,17 @@ params:
 
   homeInfoParams:
     Title: "Aymen Erraihani"
-    Content: >
+    Content:
+      >
       I'm an aspiring cybersecurity engineer currently aiming to deepen my understanding in computer security
-      and computer science. In my spare time, I often try to solve online challenges and participate in CTFs
-      with my team to improve my skills and test what I've learnt.
+      and computer science.
+
+
+      In my spare time, I enjoy solving online challenges and participating in CTFs
+      with my team.
+
+
+      You can find my personal articles and upcoming writeups below.
 
   socialIcons:
     - name: github
