@@ -1,6 +1,6 @@
 baseURL: "https://erhaym.github.io"
 languageCode: "en-us"
-title: "AE | Vindex"
+title: "Aymen Erraihani"
 theme: "PaperMod"
 
 caches:
@@ -16,6 +16,9 @@ params:
   ShowPostNavLinks: true
   ShowBreadCrumbs: false
   ShowCodeCopyButtons: true
+
+  label:
+      text: "Accueil"
 
   mainSections:
     - posts
