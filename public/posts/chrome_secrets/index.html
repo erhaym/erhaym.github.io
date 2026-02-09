@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Retrieving Chrome Saved Passwords | AE | Vindex</title>
+<meta name="keywords" content="linux, chromium, cryptography, passwords, security">
+<meta name="description" content="How Chromium stores saved passwords on Linux and how they can be decrypted under local attacker assumptions.">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/chrome_secrets/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.da3211e5ef867bf2b75fd5a6515cfed7195c011e8ab735694e203810a827097b.css" integrity="sha256-2jIR5e&#43;Ge/K3X9WmUVz&#43;1xlcAR6KtzVpTiA4EKgnCXs=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/chrome_secrets/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .list::-webkit-scrollbar-thumb {
+                border-color: var(--code-bg);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="AE | Vindex (Alt + H)">AE | Vindex</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Retrieving Chrome Saved Passwords
+    </h1>
+    <div class="post-meta"><span title='2026-02-08 00:00:00 +0000 UTC'>February 8, 2026</span>&nbsp;·&nbsp;<span>9 min</span>
+
+</div>
+  </header> 
+  <div class="post-content"><blockquote>
+<p>This article explains how Chromium-based browsers store saved passwords on Linux,
+why this mechanism is insecure by design under local attacker assumptions,
+and demonstrates how stored credentials can be decrypted.</p>
+</blockquote>
+<p>Ever got told to never click &ldquo;Save&rdquo; when your browser asks you to save the password you just entered? I often hear that, so I decided that I had to figure out exactly why this was deemed to be a bad practice.</p>
+<p>This was an opportunity for me to explore the domain of cryptography and all of the fundamental theory and practice that I had acquired during my freshman year.</p>
+<p>This article will be a documentation of my experimental journey to understand why saving passwords on your browser is generally considered a bad security practice, I will first dive into how the process of saving passwords works and the cryptography behind, before practically testing to retrieve and decrypt/deobfuscate my own passwords in order directly measure what exactly makes this practice insecure.</p>
+<h2 id="understanding-how-chromium-handles-saved-passwords">Understanding how Chromium handles saved passwords<a hidden class="anchor" aria-hidden="true" href="#understanding-how-chromium-handles-saved-passwords">#</a></h2>
+<p>Typically, when you press the &ldquo;Save&rdquo; button when getting that little pop up each time you register or login to a website for the first time, your browser stores the password you just agreed to save (alongside the username and other data) in a SQLite database inside your machine.</p>
+<p>On Linux, you can take a look at that for yourself by inspecting the following path:</p>
+<p><code>~/.config/google-chrome/Default/</code> for Chrome</p>
+<p>or <code>~/.config/chromium/Default/</code> for Chromium</p>
+<p>You should see a file named <code>Login Data</code>. That&rsquo;s the database we&rsquo;re interested in.
+We open it by using the command line interface <code>sqlite3</code>.</p>
+<pre tabindex="0"><code>$ sqlite3 &#39;Login Data&#39;
+SQLite version 3.45.1 2024-01-30 16:01:20
+Enter &#34;.help&#34; for usage hints.
+sqlite&gt; .tables
+insecure_credentials    password_notes          sync_model_metadata   
+logins                  stats                 
+meta                    sync_entities_metadata
+</code></pre><p>The database includes multiple tables containing informations about the user&rsquo;s login habits.
+But here we&rsquo;re solely insterested in the <code>logins</code> table.</p>
+<p>On sqlite3, we can take a look the table&rsquo;s structure (schema):</p>
+<pre tabindex="0"><code>sqlite&gt; .schema logins
+CREATE TABLE logins (origin_url VARCHAR NOT NULL, action_url VARCHAR, username_element VARCHAR, username_value VARCHAR,
+password_element VARCHAR, password_value BLOB, submit_element VARCHAR, signon_realm VARCHAR NOT NULL,
+date_created INTEGER NOT NULL, blacklisted_by_user INTEGER NOT NULL, scheme INTEGER NOT NULL, password_type INTEGER,
+times_used INTEGER, form_data BLOB, display_name VARCHAR, icon_url VARCHAR, federation_url VARCHAR,
+skip_zero_click INTEGER, generation_upload_status INTEGER, possible_username_pairs BLOB,
+id INTEGER PRIMARY KEY AUTOINCREMENT, date_last_used INTEGER NOT NULL DEFAULT 0, moving_blocked_for BLOB,
+date_password_modified INTEGER NOT NULL DEFAULT 0, sender_email VARCHAR, sender_name VARCHAR, date_received INTEGER,
+sharing_notification_displayed INTEGER NOT NULL DEFAULT 0, keychain_identifier BLOB, sender_profile_image_url VARCHAR,
+date_last_filled INTEGER NOT NULL DEFAULT 0, actor_login_approved INTEGER NOT NULL DEFAULT 0, UNIQUE (origin_url,
+username_element, username_value, password_element, signon_realm));
+CREATE INDEX logins_signon ON logins (signon_realm);
+sqlite&gt;
+</code></pre><blockquote>
+<p>Note: If you want to try this, make sure that your browser is closed, as the table will be locked if it is opened.</p>
+</blockquote>
+<p>Let&rsquo;s query the database, we&rsquo;ll select the following attributes:
+<code>origin_url</code>, <code>username_value</code>, <code>password_value</code>.</p>
+<pre tabindex="0"><code>sqlite&gt; SELECT origin_url, username_value, password_value FROM logins;
+https://www.*******.org/|**************@gmail.com|v11U8��=��!��@�
+https://www.*******.com/|**************@gmail.com|v10C53S�Y�8�s@c�Da�
+[...]
+</code></pre><p>As we expect, the passwords are not shown in plain text. We notice that they&rsquo;re preceded by two prefixes: &ldquo;v11&rdquo; and sometimes &ldquo;v10&rdquo;.
+We&rsquo;ll get into that right now, but first, we want to manipulate the passwords, and that is not possible if we query the DB like this because sqlite3 is currently interpreting the encrypted passwords as UTF-8 text, thus corrupting the values.
+The <code>password_value</code> actually consists of binary data coming from an encryption/obfuscation process.
+We can get the raw data in hexadecimal by using the <code>hex()</code> function, we&rsquo;ll specify as parameter the <code>password_value</code> attribute.</p>
+<p>So we should type in the following query:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> origin_url, username_value, hex(password_value) <span style="color:#66d9ef">FROM</span> logins;
+</span></span></code></pre></div><p>Now let&rsquo;s go back to those &ldquo;v10&rdquo; and &ldquo;v11&rdquo; prefixes. To understand these, we must go to <a href="https://source.chromium.org/">Chromium&rsquo;s source code</a>.</p>
+<p>When inspecting the <code>os_crypt_linux.cc</code> file we stumble upon this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#75715e">// Prefixes for cypher text returned by obfuscation version.  We prefix the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// ciphertext with this string so that future data migration can detect
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// this and migrate to full encryption without data loss. kObfuscationPrefixV10
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// means that the hardcoded password will be used. kObfuscationPrefixV11 means
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// that a password is/will be stored using an OS-level library (e.g Libsecret).
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// V11 will not be used if such a library is not available.
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">char</span> kObfuscationPrefixV10[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;v10&#34;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">char</span> kObfuscationPrefixV11[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;v11&#34;</span>;
+</span></span></code></pre></div><p>As we can see, we have two possible prefixes (&ldquo;v10&rdquo; or &ldquo;v11&rdquo;) used by Chromium to signal how the saved password is processed, they&rsquo;re notably referred to as &ldquo;ObfuscationPrefix&rdquo;. Additionally we read that:</p>
+<ul>
+<li>The &ldquo;v10&rdquo; prefix signals that the password is encrypted using a hardcoded password.</li>
+<li>The &ldquo;v11&rdquo; signals that the password is stored by using an OS-level library, Libsecret is given as an example.
+It is also said that V11 will not be used if the OS-level library is not available.</li>
+</ul>
+<p>The hardcoded password mentionned in the comments is <code>&quot;peanuts&quot;</code> and is actually in the same file, just a few lines ahead:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#75715e">// clang-format off
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// PBKDF2-HMAC-SHA1(1 iteration, key = &#34;peanuts&#34;, salt = &#34;saltysalt&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> kV10Key <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>to_array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">uint8_t</span><span style="color:#f92672">&gt;</span>({
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">0xfd</span>, <span style="color:#ae81ff">0x62</span>, <span style="color:#ae81ff">0x1f</span>, <span style="color:#ae81ff">0xe5</span>, <span style="color:#ae81ff">0xa2</span>, <span style="color:#ae81ff">0xb4</span>, <span style="color:#ae81ff">0x02</span>, <span style="color:#ae81ff">0x53</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">0x9d</span>, <span style="color:#ae81ff">0xfa</span>, <span style="color:#ae81ff">0x14</span>, <span style="color:#ae81ff">0x7c</span>, <span style="color:#ae81ff">0xa9</span>, <span style="color:#ae81ff">0x27</span>, <span style="color:#ae81ff">0x27</span>, <span style="color:#ae81ff">0x78</span>,
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><blockquote>
+<p>Note: We also see that the salt is set to <code>&quot;saltysalt&quot;</code>.</p>
+</blockquote>
+<p>This tells us that Chromium derives the encryption key using <a href="https://en.wikipedia.org/wiki/PBKDF2">PBKDF2-HMAC-SHA1</a>, with:</p>
+<ul>
+<li>the secret <code>&quot;peanuts&quot;</code></li>
+<li>the salt <code>&quot;saltysalt&quot;</code></li>
+<li>only 1 iteration (instantaneous derivation)</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">uint8_t</span>, crypto<span style="color:#f92672">::</span>aes_cbc<span style="color:#f92672">::</span>kBlockSize<span style="color:#f92672">&gt;</span> kIv{
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39; &#39;</span>,
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>This is what we call the Initialization Vector (IV) used for AES in CBC mode.
+As we can see the IV is fixed an consists of 16 space characters (0x20).</p>
+<h2 id="accessing-the-keyring">Accessing the Keyring<a hidden class="anchor" aria-hidden="true" href="#accessing-the-keyring">#</a></h2>
+<p>A keyring is a secure credential storage service provided by the operating system&rsquo;s desktop environment. It is a centralized, encrypted database that store secrets, passwords, keys and certificates and make them available to applications.</p>
+<p>On Linux Mint, which is the distribution I use, there&rsquo;s an app called <code>Passwords and Keys</code> (<code>Seahorse</code>) to inspect and manage the keyring.
+When opening it, we&rsquo;re met with a &ldquo;Login&rdquo; section, and in it is listed <code>Chromium Safe Storage</code> / <code>Chrome Safe Storage</code>: this is exactly what we&rsquo;re looking for. When inspecting the item, we get a base64-encoded password.</p>
+<p>When V11 is used, this is the exact secret used by Chromium to encrypt the saved passwords.</p>
+<p><img alt="Keyring" loading="lazy" src="/images/chrome-passwords/keyring.png"></p>
+<p>You could also just type in <code>$ secret-tool lookup application chromium</code> (or <code>chrome</code>) in your terminal to retreive your browser&rsquo;s secret.</p>
+<h2 id="understanding-how-the-encryption--obfuscation-works">Understanding how the encryption / obfuscation works<a hidden class="anchor" aria-hidden="true" href="#understanding-how-the-encryption--obfuscation-works">#</a></h2>
+<p><a href="https://en.wikipedia.org/wiki/Advanced_Encryption_Standard">AES</a> (Advanced Encryption Standard) is a symmetric block cipher that transforms data through multiple rounds of substitution and permutation operations based on the key.</p>
+<p>AES-CBC is AES in Cipher Block Chaining mode. AES encrypts data block by block (16 bytes). <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_(CBC)">CBC</a> is a mode of operation that defines how blocks are chained. In the encryption process, for each 16-byte block, it XORs the plaintext block with the previous ciphertext block, then encrypts the result with the AES key. For the first block, the “previous ciphertext block” is the IV.</p>
+<p>The Initialization Vector (IV) is usually a non-secret, unpredictable value used as the initial input block in a chaining cipher mode (like CBC). Its cryptographic function is to provide probabilistic encryption, ensuring that encrypting identical plaintext with the same key produces distinct ciphertexts. This breaks patterns and prevents statistical attacks on the ciphertext.</p>
+<p><img alt="AES-CBC" loading="lazy" src="/images/chrome-passwords/cbc.png"></p>
+<blockquote>
+<p>Image Source: Wikipedia</p>
+</blockquote>
+<p>So to decrypt AES-CBC we need:</p>
+<ul>
+<li>the IV</li>
+<li>the key, which is derived via PBKDF2</li>
+<li>the ciphertext</li>
+</ul>
+<p>This is great because:</p>
+<ul>
+<li>As we pointed out, the IV is constant in Chromium&rsquo;s code and consists of 16 space characters.</li>
+<li>The key is either <code>&quot;peanuts&quot;</code> or extracted from the OS&rsquo; DE.</li>
+<li>And we already have the ciphertext.</li>
+</ul>
+<p>Let&rsquo;s try this with a V11 password.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python3" data-lang="python3"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">import</span> sqlite3
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> AES
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> Crypto.Protocol.KDF <span style="color:#f92672">import</span> PBKDF2
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> encrypted_password <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;7631319F0A2C7D1E4B8*******************&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#75715e"># prefix: 76 31 31 -&gt; ASCII -&gt; &#34;v11&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#75715e"># so let&#39;s remove the v11 prefix</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> encrypted_password <span style="color:#f92672">=</span> encrypted_password[<span style="color:#ae81ff">2</span><span style="color:#f92672">*</span><span style="color:#ae81ff">3</span>:] <span style="color:#75715e"># 3 bytes: 6 hex chars</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> salt <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;saltysalt&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> iv <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39; &#39;</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> length <span style="color:#f92672">=</span> <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> iterations <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#75715e"># since the password was encrypted using V11</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#75715e"># we use the keyring&#39;s secret to derivate the key</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> keyring <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;**********************==&#34;</span><span style="color:#f92672">.</span>encode(<span style="color:#e6db74">&#39;utf8&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> key <span style="color:#f92672">=</span> PBKDF2(keyring, salt, length, iterations)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(key, AES<span style="color:#f92672">.</span>MODE_CBC, IV<span style="color:#f92672">=</span>iv)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> decrypted <span style="color:#f92672">=</span> cipher<span style="color:#f92672">.</span>decrypt(bytes<span style="color:#f92672">.</span>fromhex(encrypted_password))
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> decrypted
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;**************</span><span style="color:#ae81ff">\x05\x05\x05\x05\x05</span><span style="color:#e6db74">&#39;</span> <span style="color:#75715e"># \x05 : padding bytes</span>
+</span></span></code></pre></div><blockquote>
+<p>Note: Padding is extra bytes added so that the length fits a required block size.</p>
+</blockquote>
+<p>I censored my keyring secret and my password but it does work. We&rsquo;ve successfully decrypted the password. If it would&rsquo;ve been a V10 password, we&rsquo;d use the hardcoded password instead of the browser&rsquo;s keyring secret.</p>
+<h2 id="conclusion">Conclusion<a hidden class="anchor" aria-hidden="true" href="#conclusion">#</a></h2>
+<p>Therefore, a malicious program running locally, with the current user&rsquo;s privileges, could very easily recover these saved passwords. As we have seen, it just needs read access to the browser&rsquo;s profile directory and the ability to query the user&rsquo;s DE keyring.</p>
+<p>For v10 passwords, the attack is even more trivial as the key is just public information.</p>
+<p>This may seem like some kind of weakness, but it isn&rsquo;t: it should be noted that that is perfectly normal. Chrome&rsquo;s threat model explicitly <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-compromised_infected-machines-in-chromes-threat-model">doesn&rsquo;t include compromised or infected machines</a>. Thus, stored passwords are only obfuscated against casual access (which is enough) and that&rsquo;s by design.</p>
+<blockquote>
+<p><em>Why aren‘t compromised/infected machines in Chrome’s threat model?</em></p>
+</blockquote>
+<blockquote>
+<p><em>Although the attacker may now be remote, the consequences are essentially the same as with physically-local attacks. The attacker&rsquo;s code, when it runs as your user account on your machine, can do anything you can do.</em></p>
+</blockquote>
+<p>With that said, in order to demonstrate the practical implications, I&rsquo;ve written an <a href="https://github.com/erhaym/chrome-secrets-stealer">educational tool</a> in Python3 that automates this entire decryption process for all saved passwords on Chromium or Chrome.</p>
+<p>This tool is for educational and personal research only. Use it only on your own systems or systems you were authorized to completely manipulate. It should not be used on a session that does not belong to you.</p>
+<h2 id="sources">Sources<a hidden class="anchor" aria-hidden="true" href="#sources">#</a></h2>
+<ul>
+<li><a href="https://superuser.com/questions/146742/how-does-google-chrome-store-passwords">https://superuser.com/questions/146742/how-does-google-chrome-store-passwords</a></li>
+<li><a href="https://ohyicong.medium.com/how-to-hack-chrome-password-with-python-1bedc167be3d">https://ohyicong.medium.com/how-to-hack-chrome-password-with-python-1bedc167be3d</a></li>
+<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:components/os_crypt/">https://source.chromium.org/chromium/chromium/src/+/main:components/os_crypt/</a></li>
+<li><a href="https://fr.wikipedia.org/wiki/PBKDF2#Fonction_de_d%C3%A9rivation">https://fr.wikipedia.org/wiki/PBKDF2#Fonction_de_d%C3%A9rivation</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_(CBC)">https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_(CBC)</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Initialization_vector_(IV)">https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Initialization_vector_(IV)</a></li>
+<li><a href="https://stackoverflow.com/questions/23153159/decrypting-chromium-cookies/23727331">https://stackoverflow.com/questions/23153159/decrypting-chromium-cookies/23727331</a></li>
+<li><a href="https://rtfm.co.ua/en/chromium-linux-keyrings-secret-service-passwords-encryption-and-store/">https://rtfm.co.ua/en/chromium-linux-keyrings-secret-service-passwords-encryption-and-store/</a></li>
+<li><a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md">https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md</a></li>
+</ul>
+<h2 id="disclaimer">Disclaimer<a hidden class="anchor" aria-hidden="true" href="#disclaimer">#</a></h2>
+<p>This project is for educational and personal amateur security research only.</p>
+<p>It demonstrates why browsers should not be relied upon to protect credentials on compromised or shared systems. It is by no means meant to be used on a machine you were not authorized to manipulate in such a manner.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/linux/">Linux</a></li>
+      <li><a href="http://localhost:1313/tags/chromium/">Chromium</a></li>
+      <li><a href="http://localhost:1313/tags/cryptography/">Cryptography</a></li>
+      <li><a href="http://localhost:1313/tags/passwords/">Passwords</a></li>
+      <li><a href="http://localhost:1313/tags/security/">Security</a></li>
+    </ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">AE | Vindex</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

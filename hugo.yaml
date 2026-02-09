@@ -1,0 +1,55 @@
+baseURL: "https://erhaym.github.io"
+languageCode: "en-us"
+title: "AE | Vindex"
+theme: "PaperMod"
+
+caches:
+  images:
+    dir: :cacheDir/images
+
+pagination:
+  pagerSize: 10
+
+params:
+  ShowReadingTime: true
+  ShowShareButtons: false
+  ShowPostNavLinks: true
+  ShowBreadCrumbs: false
+  ShowCodeCopyButtons: true
+
+  mainSections:
+    - posts
+
+  profileMode:
+    enabled: false
+
+  homeInfoParams:
+    Title: "Aymen Erraihani"
+    Content: >
+      I'm an aspiring cybersecurity engineer currently aiming to deepen my understanding in computer security
+      and computer science. In my spare time, I often try to solve online challenges and participate in CTFs
+      with my team to improve my skills and test what I've learnt.
+
+  socialIcons:
+    - name: github
+      url: "https://github.com/erhaym"
+    - name: linkedin
+      url: "https://www.linkedin.com/in/aymen-e2006/"
+    - name: rss
+      url: "/index.xml"
+
+menu:
+  main:
+    - name: Tags
+      url: /tags/
+      weight: 1
+    - name: About
+      url: /about/
+      weight: 2
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
