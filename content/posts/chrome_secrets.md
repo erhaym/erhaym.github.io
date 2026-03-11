@@ -1,5 +1,5 @@
 ---
-title: "Retrieving Chrome Saved Passwords"
+title: "Don’t Trust Your Browser with Your Passwords"
 date: 2026-02-08
 draft: false
 tags: ["linux", "chromium", "cryptography", "passwords", "security"]

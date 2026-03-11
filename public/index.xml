@@ -15,12 +15,12 @@
       <guid>http://localhost:1313/about/</guid>
       <description>&lt;p&gt;Hello, I&amp;rsquo;m Aymen. I&amp;rsquo;m an international student passionate about everything related to cybersecurity and software.&lt;/p&gt;
 &lt;p&gt;Here I will write about my learning journey, whether it be writeups, projects or articles.&lt;/p&gt;
-&lt;p&gt;I am particularily interested in web security and pwn (binary exploitation).&lt;/p&gt;
-&lt;p&gt;In my spare time, I tackle online challenges and gain knowledge from resources on platforms like &lt;a href=&#34;https://www.root-me.org/imvindex&#34;&gt;Root-Me&lt;/a&gt; and &lt;a href=&#34;https://pwn.college/hacker/97990&#34;&gt;pwn.college&lt;/a&gt;. (Click to access my accounts)&lt;/p&gt;
+&lt;p&gt;I am particularily interested in web security and binary exploitation.&lt;/p&gt;
+&lt;p&gt;In my spare time, I enjoy tackling online challenges and gain knowledge from resources on platforms like &lt;a href=&#34;https://www.root-me.org/imvindex&#34;&gt;Root-Me&lt;/a&gt; and &lt;a href=&#34;https://pwn.college/hacker/97990&#34;&gt;pwn.college&lt;/a&gt;. (Click to access my accounts)&lt;/p&gt;
 &lt;p&gt;Feel free to contact me at &lt;a href=&#34;mailto:erraihani@proton.me&#34;&gt;erraihani@proton.me&lt;/a&gt; anytime, for any queries.&lt;/p&gt;</description>
     </item>
     <item>
-      <title>Retrieving Chrome Saved Passwords</title>
+      <title>Don’t Trust Your Browser with Your Passwords</title>
       <link>http://localhost:1313/posts/chrome_secrets/</link>
       <pubDate>Sun, 08 Feb 2026 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/posts/chrome_secrets/</guid>
